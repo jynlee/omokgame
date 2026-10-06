@@ -43,42 +43,15 @@ def stone3d_sprite(black):
     return surf
 
 
-def doodle_sprite(color, seed):
-    """원 안을 45° 빗금으로 칠하고 흔들리는 테두리를 두 번 그린 분필 돌."""
-    rnd = rng(seed)
-    size = R * 2 + 8
-    c = size / 2
-    hatch = pygame.Surface((size, size), pygame.SRCALPHA)
-    k = -2 * R
-    while k < 2 * R:
-        a = 115 + int(rnd.random() * 102)
-        pygame.draw.line(hatch, (*color, a), (c + k - R + (rnd.random() - .5) * 2, c + R),
-                         (c + k + R + (rnd.random() - .5) * 2, c - R), 2)
-        k += 3.3
-    surf = masked(hatch, circle_points(c, c, R - 1.5))
-    for _ in range(2):
-        start = rnd.random() * 6.28
-        pts = []
-        a = 0.0
-        while a <= 6.28 + .5:
-            rr = R - 1 + (rnd.random() - .5) * 1.8
-            pts.append((c + math.cos(start + a) * rr, c + math.sin(start + a) * rr))
-            a += .3
-        pygame.draw.lines(surf, (*color, 205 + int(rnd.random() * 50)), False, pts, 2)
-    return surf
-
-
 class Chalk:
+    title = "칠판"
+    names = {BLACK: "흑", WHITE: "백"}
     ink = CHALK
     text_color = (244, 246, 238)
+    mark_color = (232, 93, 117)
+    win_color = (255, 156, 192)
 
-    def __init__(self, doodle=False):
-        self.doodle = doodle
-        self.title = "칠판(분필 돌)" if doodle else "칠판"
-        self.names = {BLACK: "분홍(흑)", WHITE: "파랑(백)"} if doodle else {BLACK: "흑", WHITE: "백"}
-        self.stone_colors = {BLACK: (255, 156, 192), WHITE: (134, 193, 238)}
-        self.mark_color = (246, 246, 238) if doodle else (232, 93, 117)
-        self.win_color = (246, 226, 122) if doodle else (255, 156, 192)
+    def __init__(self):
         self._bg = None
         self._sprites = {}
         self._text_cache = {}
@@ -120,12 +93,10 @@ class Chalk:
         pygame.draw.rect(bg, (91, 55, 25), (11, 11, WIDTH - 22, HEIGHT - 22), 2)
         return bg
 
-    def stone(self, surf, x, y, color, seed):
-        key = (color, seed) if self.doodle else color
-        if key not in self._sprites:
-            self._sprites[key] = (doodle_sprite(self.stone_colors[color], seed + color * 1000) if self.doodle
-                                  else stone3d_sprite(color == BLACK))
-        img = self._sprites[key]
+    def stone(self, surf, x, y, color):
+        if color not in self._sprites:
+            self._sprites[color] = stone3d_sprite(color == BLACK)
+        img = self._sprites[color]
         surf.blit(img, img.get_rect(center=(x, y)))
 
     def last_mark(self, surf, x, y):

@@ -4,15 +4,15 @@ Python과 pygame으로 만든 15×15 오목 게임입니다. 2인 대전과 난�
 
 > 🎮 **브라우저에서 플레이**: 준비 중 (웹 빌드 작업 예정)
 
-| 모래사장 | 칠판 | 칠판(분필 돌) |
-|---|---|---|
-| ![모래사장 테마](docs/screenshots/sand.png) | ![칠판 테마](docs/screenshots/chalk.png) | ![칠판 분필 돌 테마](docs/screenshots/chalk-doodle.png) |
+| 모래사장 | 칠판 |
+|---|---|
+| ![모래사장 테마](docs/screenshots/sand.png) | ![칠판 테마](docs/screenshots/chalk.png) |
 
 ## 기능
 
 - **2인 대전**: 한 화면에서 번갈아 둡니다
 - **AI 대전**: Easy / Normal / Hard. 사람이 흑(선공)입니다
-- **테마 3종**: 모래사장(소라와 조개), 칠판(입체 바둑돌), 칠판(분필 낙서 돌)
+- **테마 2종**: 모래사장(소라와 조개), 칠판(입체 바둑돌)
 - **승리 강조**: 완성된 5목에 금빛 반짝임 또는 분필 선 애니메이션
 - **무르기, 다시 시작**: AI 대전에서는 사람 차례로 돌아갈 때까지 무릅니다
 - **규칙**: 자유룰. 같은 색 5개 이상 연속이면 승리합니다 (6목 포함, 금수 없음)
@@ -46,7 +46,7 @@ python main.py
 python -m pytest
 ```
 
-규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 테스트 46개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
+규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 테스트 45개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
 
 ## 구조
 
@@ -59,7 +59,7 @@ omok/
 └── themes/
     ├── common.py   그라데이션, 글꼴 로딩 등 공통 도구
     ├── sand.py     모래사장 테마
-    └── chalk.py    칠판 테마 (입체돌, 분필 돌)
+    └── chalk.py    칠판 테마
 assets/fonts/       Jua, Nanum Pen Script (SIL OFL 1.1)
 tests/              pytest 테스트
 docs/               설계 문서와 구현 계획

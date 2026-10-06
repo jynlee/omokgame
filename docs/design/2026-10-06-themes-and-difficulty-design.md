@@ -2,14 +2,14 @@
 
 - 날짜: 2026-10-06
 - 선행: `docs/design/2026-10-06-omok-core-pygame-design.md` (코어 + Pygame, 구현 완료)
-- 시안: 모래사장 / 칠판 + 입체돌 / 칠판 + 분필 낙서 돌 (사용자 확정)
+- 시안: 모래사장 / 칠판 + 입체돌 (사용자 확정)
 
 ## 목적
 
 기본 도형으로 그린 화면을 테마가 있는 화면으로 바꾸고, AI 대전에 난이도 3단계를 추가한다.
 
 성공 기준:
-- 메뉴에서 테마 3종 중 하나를 고르면 메뉴, 게임 화면 전체에 적용된다
+- 메뉴에서 테마 2종 중 하나를 고르면 메뉴, 게임 화면 전체에 적용된다
 - 화면 문구가 한글로 표시된다 (글꼴 파일 포함)
 - AI 대전에서 Easy / Normal / Hard를 고를 수 있고, 난이도 차이가 체감된다
 - Hard의 한 수 계산은 1초 이내를 목표로 한다
@@ -17,7 +17,7 @@
 
 ## 범위
 
-포함: 테마 3종, 승리 5목 강조 효과, 한글 글꼴, 메뉴의 테마 선택, 난이도 선택 화면, Hard 계산 중 "생각 중..." 표시
+포함: 테마 2종, 승리 5목 강조 효과, 한글 글꼴, 메뉴의 테마 선택, 난이도 선택 화면, Hard 계산 중 "생각 중..." 표시
 
 제외 (추후): 마우스 위치 미리보기, 효과음, 설정 저장(테마는 실행 중에만 유지, 시작 시 모래사장)
 
@@ -32,7 +32,7 @@ assets/fonts/
   Jua-Regular.ttf, Jua-OFL.txt
   NanumPenScript-Regular.ttf, NanumPenScript-OFL.txt
 omok/layout.py          CELL, MARGIN, TOP, WIDTH, HEIGHT, cell_center(r, c)
-omok/themes/__init__.py THEMES = [Sand(), Chalk(), Chalk(doodle=True)]
+omok/themes/__init__.py THEMES = [Sand(), Chalk()]
 omok/themes/common.py   rng(seed), load_font(file, size)
 omok/themes/sand.py     class Sand
 omok/themes/chalk.py    class Chalk
@@ -49,10 +49,10 @@ omok/themes/chalk.py    class Chalk
 
 | 이름 | 설명 |
 |---|---|
-| `title: str` | 메뉴 표시 이름: `"모래사장"`, `"칠판"`, `"칠판(분필 돌)"` |
+| `title: str` | 메뉴 표시 이름: `"모래사장"`, `"칠판"` |
 | `names: dict[int, str]` | 상태 문구용 색 이름 |
 | `background() -> Surface` | `WIDTH × HEIGHT` 배경 (격자, 화점, 상단 바 포함). 첫 호출 때 그려서 캐시 |
-| `stone(surf, x, y, color, seed)` | 돌 하나. `seed`로 분필 돌의 모양을 고정 |
+| `stone(surf, x, y, color)` | 돌 하나 |
 | `last_mark(surf, x, y)` | 마지막 수 표시 |
 | `win_effect(surf, points, t)` | 승리 강조. `points`는 승리 칸들의 픽셀 좌표, `t`는 ms |
 | `text(surf, s, size, pos, align="left", rough=1.0, color=None)` | 문구. `pos`는 기준점, `align`은 `"left"`/`"center"`/`"right"`, `color`가 없으면 테마 기본 글씨색 |
@@ -68,20 +68,13 @@ omok/themes/chalk.py    class Chalk
 - 승리: 승리 칸마다 황금빛 원형 빛(더하기 합성이라 돌을 가리지 않고 빛나게 함)이 약 3초 주기로 은은하게 밝아졌다 어두워지고, 선 주변 작은 반짝이 14개가 각자 위상으로 천천히 깜빡임 (눈부심 피드백 반영)
 - 글꼴: Jua, 흰색, 상단 바 위에 그림자. `rough` 무시
 
-**Chalk (칠판), `doodle=False`**
+**Chalk (칠판)**
 - 배경: 짙은 초록, 지우개 자국(크고 옅은 흰 얼룩, 가로 붓질), 분필 가루 점, 흔들리고 군데군데 끊긴 분필 격자선, 분필 점 화점, 나무 테두리
 - 돌: 광택과 그림자가 있는 입체 흑돌, 백돌
 - `names`: `{BLACK: "흑", WHITE: "백"}`
 - 마지막 수: 분홍 작은 원 테두리
 - 승리: 분홍 분필 선이 승리 5목을 양 끝보다 조금 더 길게 약 1.3초에 걸쳐 그어지고, 3.2초 주기로 반복
 - 글씨: Nanum Pen Script + 분필 질감 (아래)
-
-**Chalk, `doodle=True` (칠판(분필 돌))**
-- 배경, 글씨: Chalk와 같음
-- 돌: 흑 = 분홍 분필, 백 = 파란 분필. 원 안을 빗금으로 칠하고 흔들리는 테두리를 두 번 그림
-- `names`: `{BLACK: "분홍(흑)", WHITE: "파랑(백)"}`
-- 마지막 수: 흰 분필 작은 원
-- 승리 선: 노란 분필 (분홍 돌과 구분)
 
 ### 분필 글씨
 
@@ -161,8 +154,8 @@ omok/themes/chalk.py    class Chalk
 - Hard, Easy 모두 `board.grid`가 호출 전후로 같다
 
 `test_themes.py` (`SDL_VIDEODRIVER=dummy`):
-- 세 테마 각각 `background()`가 `(WIDTH, HEIGHT)` Surface를 반환하고, 두 번째 호출은 같은 객체(캐시)
+- 두 테마 각각 `background()`가 `(WIDTH, HEIGHT)` Surface를 반환하고, 두 번째 호출은 같은 객체(캐시)
 - 각 테마로 `stone`(흑/백), `last_mark`, `win_effect`(t=0, 1000), `text`(left/center/right)가 오류 없이 그려진다
 - Chalk `text`: 같은 인자 두 번 호출 시 내부 캐시 크기가 1만 늘어난다
 
-수동 확인: 테마 3종 × 메뉴/게임/승리 화면, 난이도 3종 각각 한 판, Hard 응답 시간 체감
+수동 확인: 테마 2종 × 메뉴/게임/승리 화면, 난이도 3종 각각 한 판, Hard 응답 시간 체감

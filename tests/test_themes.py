@@ -35,8 +35,8 @@ def test_drawing_calls(theme):
     assert theme.title and set(theme.names) == {BLACK, WHITE}
     surf = pygame.Surface((WIDTH, HEIGHT))
     x, y = cell_center(7, 7)
-    theme.stone(surf, x, y, BLACK, 1)
-    theme.stone(surf, x + 40, y, WHITE, 2)
+    theme.stone(surf, x, y, BLACK)
+    theme.stone(surf, x + 40, y, WHITE)
     theme.last_mark(surf, x, y)
     points = [cell_center(i, i) for i in range(5)]
     for t in (0, 1000):
@@ -53,5 +53,5 @@ def test_chalk_text_cached():
     assert len(theme._text_cache) == 1
 
 
-def test_three_themes_with_distinct_titles():
-    assert [t.title for t in THEMES] == ["모래사장", "칠판", "칠판(분필 돌)"]
+def test_two_themes_with_distinct_titles():
+    assert [t.title for t in THEMES] == ["모래사장", "칠판"]

@@ -147,7 +147,7 @@ class Sand:
             self._sprites[key] = make()
         return self._sprites[key]
 
-    def stone(self, surf, x, y, color, seed):
+    def stone(self, surf, x, y, color):
         img = self._sprite(color, conch_sprite if color == BLACK else scallop_sprite)
         surf.blit(img, img.get_rect(center=(x, y)))
 

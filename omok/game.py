@@ -49,7 +49,7 @@ def draw_game(screen, theme, board, status, t):
     for r in range(SIZE):
         for c in range(SIZE):
             if board.grid[r][c] != EMPTY:
-                theme.stone(screen, *cell_center(r, c), board.grid[r][c], r * SIZE + c)
+                theme.stone(screen, *cell_center(r, c), board.grid[r][c])
     if board.history:
         theme.last_mark(screen, *cell_center(*board.history[-1]))
     line = board.winning_line()
