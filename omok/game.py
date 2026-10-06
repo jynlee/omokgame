@@ -2,10 +2,7 @@ import pygame
 
 from omok.board import Board, SIZE, EMPTY, BLACK, WHITE
 from omok.ai import choose_move
-
-CELL, MARGIN, TOP = 40, 40, 60
-WIDTH = MARGIN * 2 + CELL * (SIZE - 1)
-HEIGHT = TOP + WIDTH
+from omok.layout import CELL, MARGIN, TOP, WIDTH, HEIGHT, cell_center
 
 BG = (220, 179, 92)
 LINE = (0, 0, 0)
@@ -29,10 +26,6 @@ def undo_turn(board, mode):
     board.undo()
     if mode == "ai" and board.turn != BLACK and board.history:
         board.undo()
-
-
-def cell_center(r, c):
-    return MARGIN + c * CELL, TOP + MARGIN + r * CELL
 
 
 def status_text(board):

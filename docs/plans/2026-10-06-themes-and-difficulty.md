@@ -20,7 +20,7 @@
 ## Review Focus
 
 1. 테마를 바꾼 직후 배경 캐시가 다른 테마 것으로 섞이지 않는지 (테마 객체별 캐시, Task 3/4 테스트)
-2. Hard 계산 중 창이 "응답 없음"으로 보이지 않도록 "생각 중…" 프레임을 먼저 그리는지 (Task 5 수동 확인)
+2. Hard 계산 중 창이 "응답 없음"으로 보이지 않도록 "생각 중..." 프레임을 먼저 그리는지 (Task 5 수동 확인)
 3. 실행 위치가 프로젝트 루트가 아니어도 글꼴을 찾는지 (패키지 기준 경로, Task 3 테스트)
 4. 6목 승리 시 강조가 6칸 모두에 적용되는지 (Task 1 테스트)
 5. 승리 후 `U`로 무르면 승리 효과가 사라지고 다시 둘 수 있는지 (Task 5 수동 확인, `winning_line()`은 Task 1에서 `[]` 확인)
@@ -307,7 +307,7 @@ NAMES = {BLACK: "소라(흑)", WHITE: "조개(백)"}
 def test_status_text():
     b = Board()
     assert status_text(b, NAMES) == "소라(흑) 차례"
-    assert status_text(b, NAMES, thinking=True) == "생각 중…"
+    assert status_text(b, NAMES, thinking=True) == "생각 중..."
     for c in range(4):
         b.place(7, c); b.place(0, c * 2)
     b.place(7, 4)
@@ -322,14 +322,14 @@ def test_status_text():
 - menu: 제목 `"오목"`(크기 72, y = HEIGHT/4), 버튼 `"2인 대전"`/`"AI 대전"` 200×60을 (WIDTH/2 ∓ 115, HEIGHT/2), 테마 줄 y = HEIGHT/2 + 110에 `"◀"`, `title`, `"▶"` (◀ ▶ 각각 50×50 클릭 영역). ←/→ 키도 순환
 - difficulty: `"Easy"`, `"Normal"`, `"Hard"` 220×56 세로 배치(HEIGHT/2 - 70부터 70 간격), `"뒤로"` 아래. 클릭 시 `level` 설정 후 새 `Board`, `"playing"`. ESC/뒤로 → menu
 - playing: 사람 착수 성공 후 AI 모드이고 진행 중이면 `ai_pending = True`. 루프 끝에서 화면을 그린 **다음** `ai_pending`이면 `choose_move(board, WHITE, level)` 착수 후 `False`. `ai_pending` 중 클릭 무시
-- `draw_game`: 배경 blit → 돌(`seed = r * 15 + c`) → 마지막 수 → 승자 있으면 `win_effect(screen, [cell_center(*p) for p in board.winning_line()], t)` → 상태 문구(크기 32, (20, TOP/2), 왼쪽, rough 1.0) → 도움말 `"U 무르기 · R 다시 · ESC 메뉴"`(크기 20, (WIDTH-20, TOP/2), 오른쪽, rough 0.3)
+- `draw_game`: 배경 blit → 돌(`seed = r * 15 + c`) → 마지막 수 → 승자 있으면 `win_effect(screen, [cell_center(*p) for p in board.winning_line()], t)` → 상태 문구(크기 32, (20, TOP/2), 왼쪽, rough 1.0) → 도움말 `"U 무르기 | R 다시 | ESC 메뉴"`(크기 20, (WIDTH-20, TOP/2), 오른쪽, rough 0.3)
 - 메뉴 버튼은 `theme.ink` 테두리 3px, 모서리 10, 글씨는 `theme.text(..., align="center")`
 - `pixel_to_cell`, `undo_turn` 유지
 - [ ] **Step 4:** `.venv/bin/python -m pytest -q` → 45 passed
 - [ ] **Step 5: 수동 확인** — `wsl .venv/bin/python main.py` (사용자가 Windows 터미널에서)
   - 테마 3종을 메뉴에서 돌려보며 배경이 즉시 바뀌는지
   - 각 테마로 한 판: 돌 모양, 마지막 수, 승리 효과(6목 포함 가능하면), 승리 후 `U`로 효과가 사라지는지
-  - Easy/Normal/Hard 한 판씩, Hard에서 "생각 중…" 표시 후 1초 안팎으로 응수하는지
+  - Easy/Normal/Hard 한 판씩, Hard에서 "생각 중..." 표시 후 1초 안팎으로 응수하는지
 - [ ] **Step 6: Commit** (확인 후) `feat: wire themes, korean text and difficulty menu into game`
 
 ---
