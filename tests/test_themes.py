@@ -43,3 +43,15 @@ def test_drawing_calls(theme):
         theme.win_effect(surf, points, t)
     for align in ("left", "center", "right"):
         theme.text(surf, "흑 승리!", 30, (320, 30), align)
+
+
+def test_chalk_text_cached():
+    from omok.themes.chalk import Chalk
+    theme, surf = Chalk(), pygame.Surface((WIDTH, HEIGHT))
+    theme.text(surf, "흑 승리!", 34, (20, 30))
+    theme.text(surf, "흑 승리!", 34, (20, 30))
+    assert len(theme._text_cache) == 1
+
+
+def test_three_themes_with_distinct_titles():
+    assert [t.title for t in THEMES] == ["모래사장", "칠판", "칠판(분필 돌)"]

@@ -32,6 +32,7 @@ def vgradient(surf, rect, top, bottom):
 def radial(size, center, radius, stops):
     """size 크기 SRCALPHA Surface에 center 기준 방사형 그라데이션. stops = [(t, rgba), ...]"""
     surf = pygame.Surface(size, pygame.SRCALPHA)
+    surf.fill(stops[-1][1])  # 반지름 밖은 마지막 색 (모서리가 비지 않게)
     for rad in range(radius, 0, -1):
         t = rad / radius
         for (t0, c0), (t1, c1) in zip(stops, stops[1:]):
