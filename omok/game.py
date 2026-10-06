@@ -12,7 +12,6 @@ from omok.themes import THEMES
 LEVEL_LABELS = {"Easy": "easy", "Normal": "normal", "Hard": "hard"}
 AI_DELAY_MS = (600, 1200)  # AI가 고민하는 듯 보이는 최소 시간 (긴장감용)
 AI_BUDGET_MS = 12  # 프레임마다 AI 계산에 쓰는 시간. 나머지는 화면 그리기
-BAR_KEYS = {pygame.K_u: "무르기", pygame.K_r: "다시", pygame.K_ESCAPE: "메뉴"}
 
 
 def pixel_to_cell(x, y):
@@ -128,6 +127,8 @@ async def main():
     pygame.display.set_caption("Omok")
     clock = pygame.time.Clock()
     buttons = {**menu_buttons(), "bar": bar_buttons()}
+    # 웹(pygbag)의 pygame은 키 상수를 초기화 뒤에야 제공하므로 여기서 만든다
+    bar_keys = {pygame.K_u: "무르기", pygame.K_r: "다시", pygame.K_ESCAPE: "메뉴"}
 
     state, mode, level, theme_idx = "menu", "pvp", "normal", 0
     board, won_at = Board(), None
@@ -184,8 +185,8 @@ async def main():
                     theme_idx = (theme_idx + (1 if event.key == pygame.K_RIGHT else -1)) % len(THEMES)
                 elif state == "difficulty" and event.key == pygame.K_ESCAPE:
                     state = "menu"
-                elif state in ("playing", "over") and event.key in BAR_KEYS:
-                    act(BAR_KEYS[event.key])
+                elif state in ("playing", "over") and event.key in bar_keys:
+                    act(bar_keys[event.key])
 
         theme = THEMES[theme_idx]
         if state in ("menu", "difficulty"):

@@ -1,7 +1,6 @@
 import math
 
 import pygame
-from pygame import gfxdraw
 
 from omok.board import SIZE, BLACK, WHITE
 from omok.layout import CELL, TOP, WIDTH, HEIGHT, cell_center
@@ -43,7 +42,7 @@ def conch_sprite():
     hl = rotate([(cx - R * .25, -R * .35)], angle, c, c)[0]
     fill = radial((size, size), hl, int(R * 1.4), [(0, (190, 232, 250, 255)), (1, (52, 128, 178, 255))])
     surf.blit(masked(fill, body), (0, 0))
-    gfxdraw.aapolygon(surf, [(round(x), round(y)) for x, y in body], (30, 88, 130))
+    pygame.draw.aalines(surf, (30, 88, 130), True, [(round(x), round(y)) for x, y in body])
     spiral = [(cx + math.cos(t) * rad * .82 * (1 - t / (math.pi * 3.6)),
                math.sin(t) * rad * .82 * (1 - t / (math.pi * 3.6)))
               for t in (i * .15 for i in range(int(math.pi * 3.2 / .15) + 1))]
@@ -74,13 +73,13 @@ def scallop_sprite():
             outline.append(tuple((1 - t) ** 2 * a + 2 * (1 - t) * t * b + t * t * d for a, b, d in zip(p0, p1, p2)))
     fill = radial((size, size), (c - R * .3, c - R * .5), int(R * 1.5), [(0, (255, 247, 243, 255)), (1, (239, 159, 176, 255))])
     surf.blit(masked(fill, outline), (0, 0))
-    gfxdraw.aapolygon(surf, [(round(x), round(y)) for x, y in outline], (197, 106, 128))
+    pygame.draw.aalines(surf, (197, 106, 128), True, [(round(x), round(y)) for x, y in outline])
     for i in range(1, n):
         ex, ey = edge(i)
         pygame.draw.aaline(surf, (210, 130, 150), (c, c + by), (c + (ex - c) * .92, c + by + (ey - c - by) * .92))
     ear = [(c - R * .32, c + by - 1), (c + R * .32, c + by - 1), (c + R * .2, c + by + R * .22), (c - R * .2, c + by + R * .22)]
     pygame.draw.polygon(surf, (246, 195, 205), ear)
-    gfxdraw.aapolygon(surf, [(round(x), round(y)) for x, y in ear], (197, 106, 128))
+    pygame.draw.aalines(surf, (197, 106, 128), True, [(round(x), round(y)) for x, y in ear])
     return surf
 
 
@@ -153,8 +152,8 @@ class Sand:
 
     def last_mark(self, surf, x, y):
         pts = [(round(px), round(py)) for px, py in star(x + R * .75, y - R * .7, 8, 3.6, 5, -math.pi / 2 + .3)]
-        gfxdraw.filled_polygon(surf, pts, (255, 138, 61))
-        gfxdraw.aapolygon(surf, pts, (201, 90, 26))
+        pygame.draw.polygon(surf, (255, 138, 61), pts)
+        pygame.draw.aalines(surf, (201, 90, 26), True, pts)
 
     def win_effect(self, surf, points, t):
         glows = self._sprite("glow", glow_sprites)
@@ -173,8 +172,8 @@ class Sand:
             if a > .05:
                 pts = [(round(px), round(py)) for px, py in star(sx, sy, size * a, size * a * .25, 4)]
                 color = (255, 226, 120) if gold else (255, 255, 255)
-                gfxdraw.filled_polygon(surf, pts, color)
-                gfxdraw.aapolygon(surf, pts, color)
+                pygame.draw.polygon(surf, color, pts)
+                pygame.draw.aalines(surf, color, True, pts)
 
     def text(self, surf, s, size, pos, align="left", rough=1.0, color=None):
         color = color or self.text_color
