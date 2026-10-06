@@ -1,3 +1,5 @@
+import random
+
 from omok.board import SIZE, EMPTY, BLACK, WHITE, DIRECTIONS
 
 # (연속 개수, 열린 끝 수) -> 점수. 없는 조합은 1점
@@ -34,11 +36,98 @@ def candidates(grid):
     return near or empty
 
 
-def choose_move(board, color):
+LEVELS = ("easy", "normal", "hard")
+
+# Hard 탐색: 단계별 후보 수, 읽는 수, 승리 값, 차례인 쪽 주도권 가중치
+K, DEPTH, WIN, INITIATIVE = 10, 5, 10**9, 1.5
+
+
+def other(color):
+    return WHITE if color == BLACK else BLACK
+
+
+def makes_five(grid, r, c, color):
+    return any(line_score(grid, r, c, dr, dc, color) >= 100000 for dr, dc in DIRECTIONS)
+
+
+def forced_move(grid, color):
+    """내가 5목을 만드는 칸, 없으면 상대의 5목을 막는 칸, 없으면 None."""
+    cands = candidates(grid)
+    for who in (color, other(color)):
+        for r, c in cands:
+            if makes_five(grid, r, c, who):
+                return r, c
+    return None
+
+
+def ranked(grid, color):
+    """후보를 휴리스틱 점수 내림차순으로. 공격에 1.1배 가중치(내 승리수 우선)."""
+    opp = other(color)
+    return sorted(candidates(grid),
+                  key=lambda p: -(1.1 * evaluate(grid, *p, color) + evaluate(grid, *p, opp)))
+
+
+def patterns(grid, color):
+    """color 돌의 연속 구간(2개 이상)마다 (길이, 열린 끝)을 SCORES로 매겨 합산."""
+    total = 0
+    for r in range(SIZE):
+        for c in range(SIZE):
+            if grid[r][c] != color:
+                continue
+            for dr, dc in DIRECTIONS:
+                pr, pc = r - dr, c - dc
+                if 0 <= pr < SIZE and 0 <= pc < SIZE and grid[pr][pc] == color:
+                    continue  # 구간의 시작점에서만 센다
+                n, rr, cc = 0, r, c
+                while 0 <= rr < SIZE and 0 <= cc < SIZE and grid[rr][cc] == color:
+                    n, rr, cc = n + 1, rr + dr, cc + dc
+                if n >= 2:
+                    open_ends = sum(0 <= y < SIZE and 0 <= x < SIZE and grid[y][x] == EMPTY
+                                    for y, x in ((rr, cc), (pr, pc)))
+                    total += SCORES.get((min(n, 5), open_ends), 0)
+    return total
+
+
+def negamax(grid, color, depth, alpha, beta):
+    """알파베타 negamax. 값은 차례인 color 관점."""
+    opp = other(color)
+    if depth == 0:
+        return INITIATIVE * patterns(grid, color) - patterns(grid, opp)
+    best = -WIN * 10
+    for r, c in ranked(grid, color)[:K]:
+        if makes_five(grid, r, c, color):
+            return WIN + depth  # 빨리 이길수록 큰 값
+        grid[r][c] = color
+        value = -negamax(grid, opp, depth - 1, -beta, -alpha)
+        grid[r][c] = EMPTY
+        best, alpha = max(best, value), max(alpha, value)
+        if alpha >= beta:
+            break
+    return best
+
+
+def search(board, color):
+    grid = [row[:] for row in board.grid]  # 원본 판은 건드리지 않는다
+    opp = other(color)
+    best, move, alpha = -WIN * 10, None, -WIN * 10
+    for r, c in ranked(grid, color)[:K]:
+        grid[r][c] = color
+        value = -negamax(grid, opp, DEPTH - 1, -WIN * 10, -alpha)
+        grid[r][c] = EMPTY
+        if value > best:
+            best, move = value, (r, c)
+        alpha = max(alpha, value)
+    return move
+
+
+def choose_move(board, color, level="normal", rand=None):
     if not board.history:
         return SIZE // 2, SIZE // 2
-    opponent = WHITE if color == BLACK else BLACK
-    grid = board.grid
-    # 공격 점수에 1.1배 가중치: 내 승리수가 상대 차단수보다 우선
-    return max(candidates(grid),
-               key=lambda p: 1.1 * evaluate(grid, *p, color) + evaluate(grid, *p, opponent))
+    forced = forced_move(board.grid, color)
+    if forced:
+        return forced
+    if level == "easy":
+        return (rand or random).choice(ranked(board.grid, color)[:3])
+    if level == "hard":
+        return search(board, color)
+    return ranked(board.grid, color)[0]
