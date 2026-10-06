@@ -17,20 +17,64 @@ Python과 pygame으로 만든 15×15 오목 게임입니다. 2인 대전과 난�
 - **무르기, 다시 시작**: AI 대전에서는 사람 차례로 돌아갈 때까지 무릅니다
 - **규칙**: 자유룰. 같은 색 5개 이상 연속이면 승리합니다 (6목 포함, 금수 없음)
 
-## 실행
+## 실행 방법
 
-Python 3.12 이상이 필요합니다.
+### 1. 게임 실행
 
-```bash
-git clone https://github.com/jynlee/omokgame.git
-cd omokgame
-python -m venv .venv
-.venv/Scripts/activate          # macOS, Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python main.py
-```
+#### 사전 준비
 
-## 조작법
+- **Python 3.12 이상**이 설치되어 있어야 합니다. 설치 여부는 아래 명령으로 확인할 수 있습니다.
+
+    ```sh
+    python --version
+    ```
+
+#### 실행 단계
+
+1.  **저장소 받기:**
+    소스 코드를 내려받고 프로젝트 폴더로 이동합니다.
+
+    ```sh
+    git clone https://github.com/jynlee/omokgame.git
+    cd omokgame
+    ```
+
+2.  **가상환경 만들기:**
+    이 프로젝트에서만 쓰는 독립된 Python 환경을 만듭니다. 시스템에 설치된 다른 패키지와 섞이지 않습니다.
+
+    ```sh
+    python -m venv .venv
+    ```
+
+3.  **가상환경 켜기:**
+    운영체제에 맞는 명령을 실행합니다. 프롬프트 앞에 `(.venv)`가 붙으면 켜진 것입니다.
+
+    ```sh
+    # Windows (명령 프롬프트)
+    .venv\Scripts\activate
+
+    # Windows (PowerShell)
+    .venv\Scripts\Activate.ps1
+
+    # macOS, Linux
+    source .venv/bin/activate
+    ```
+
+4.  **의존성 설치:**
+    `requirements.txt`에 적힌 패키지(pygame, pytest)를 설치합니다.
+
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+5.  **게임 시작:**
+    창이 열리고 메뉴 화면이 나타납니다.
+
+    ```sh
+    python main.py
+    ```
+
+#### 조작법
 
 | 입력 | 동작 |
 |---|---|
@@ -40,13 +84,45 @@ python main.py
 | R | 다시 시작 |
 | ESC | 메뉴로 |
 
-## 테스트
+### 2. 테스트 실행
 
-```bash
-python -m pytest
-```
+규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 pytest 테스트 45개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
 
-규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 테스트 45개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
+#### 사전 준비
+
+- 위 **게임 실행**의 1~4단계(저장소 받기, 가상환경, 의존성 설치)를 마친 상태여야 합니다. pytest는 `requirements.txt`로 함께 설치됩니다.
+- 테마 테스트는 창을 띄우지 않고 화면 없는 모드로 그리기를 검사하므로, 별도 설정이 필요 없습니다.
+
+#### 테스트 단계
+
+1.  **전체 테스트 실행:**
+    프로젝트 폴더에서 실행합니다. Hard 대 Normal 대국 테스트 때문에 15초 정도 걸립니다.
+
+    ```sh
+    python -m pytest
+    ```
+
+2.  **테스트별 결과 자세히 보기:**
+    각 테스트 이름과 통과 여부를 한 줄씩 출력합니다.
+
+    ```sh
+    python -m pytest -v
+    ```
+
+3.  **일부만 실행하기:**
+    파일이나 테스트 이름으로 골라서 실행할 수 있습니다.
+
+    ```sh
+    python -m pytest tests/test_board.py          # 규칙 테스트만
+    python -m pytest -k hard_beats_normal         # Hard 대 Normal 대국만
+    ```
+
+4.  **오래 걸린 테스트 확인:**
+    가장 오래 걸린 테스트 5개와 시간을 함께 보여줍니다.
+
+    ```sh
+    python -m pytest --durations=5
+    ```
 
 ## 구조
 
