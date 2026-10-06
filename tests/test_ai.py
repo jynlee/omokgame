@@ -99,3 +99,30 @@ def test_hard_beats_normal_as_both_colors():
             assert b.place(*move)
         assert b.winner() == hard_color
         assert worst < 2.0
+
+
+from omok.ai import move_steps
+
+
+def drain(steps):
+    yields = 0
+    while True:
+        try:
+            next(steps)
+            yields += 1
+        except StopIteration as done:
+            return yields, done.value
+
+
+MID = dict(black=[(7, 7), (8, 8), (6, 8)], white=[(7, 8), (8, 7)], turn=BLACK)
+
+
+def test_hard_steps_yield_and_match_choose_move():
+    yields, move = drain(move_steps(setup(**MID), BLACK, "hard"))
+    assert yields >= 1
+    assert move == choose_move(setup(**MID), BLACK, "hard")
+
+
+def test_easy_and_normal_steps_finish_without_yield():
+    assert drain(move_steps(setup(**MID), BLACK, "normal")) == (0, choose_move(setup(**MID), BLACK, "normal"))
+    assert drain(move_steps(setup(**MID), BLACK, "easy", random.Random(1)))[0] == 0

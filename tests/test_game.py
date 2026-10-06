@@ -65,3 +65,27 @@ def test_effect_time_counts_from_win():
     from omok.game import effect_time
     assert effect_time(now=50_000, won_at=49_000) == 1000
     assert effect_time(now=50_000, won_at=None) == 0
+
+
+def test_advance_runs_at_least_once_and_finishes():
+    from omok.game import advance
+
+    def steps():
+        yield
+        yield
+        return "done"
+
+    gen, results = steps(), []
+    while not results or not results[-1][0]:
+        results.append(advance(gen, 0))
+    assert results == [(False, None), (False, None), (True, "done")]
+
+
+def test_bar_buttons_stay_above_board():
+    from omok.game import bar_buttons
+    buttons = bar_buttons()
+    assert list(buttons) == ["무르기", "다시", "메뉴"]
+    rects = list(buttons.values())
+    for i, rect in enumerate(rects):
+        assert rect.bottom < TOP and pixel_to_cell(*rect.center) is None
+        assert not any(rect.colliderect(other) for other in rects[i + 1:])

@@ -40,6 +40,7 @@ LEVELS = ("easy", "normal", "hard")
 
 # Hard 탐색: 단계별 후보 수, 읽는 수, 승리 값, 차례인 쪽 주도권 가중치
 K, DEPTH, WIN, INITIATIVE = 10, 5, 10**9, 1.5
+YIELD_EVERY = 20  # 탐색 노드 이만큼마다 화면에 차례를 넘긴다 (웹에서 한 번에 약 40ms)
 
 
 def other(color):
@@ -88,8 +89,11 @@ def patterns(grid, color):
     return total
 
 
-def negamax(grid, color, depth, alpha, beta):
-    """알파베타 negamax. 값은 차례인 color 관점."""
+def negamax_steps(grid, color, depth, alpha, beta, counter):
+    """알파베타 negamax. 값은 차례인 color 관점. 노드 YIELD_EVERY개마다 멈춰 화면에 차례를 넘긴다."""
+    counter[0] += 1
+    if counter[0] % YIELD_EVERY == 0:
+        yield
     opp = other(color)
     if depth == 0:
         return INITIATIVE * patterns(grid, color) - patterns(grid, opp)
@@ -98,7 +102,7 @@ def negamax(grid, color, depth, alpha, beta):
         if makes_five(grid, r, c, color):
             return WIN + depth  # 빨리 이길수록 큰 값
         grid[r][c] = color
-        value = -negamax(grid, opp, depth - 1, -beta, -alpha)
+        value = -(yield from negamax_steps(grid, opp, depth - 1, -beta, -alpha, counter))
         grid[r][c] = EMPTY
         best, alpha = max(best, value), max(alpha, value)
         if alpha >= beta:
@@ -106,13 +110,14 @@ def negamax(grid, color, depth, alpha, beta):
     return best
 
 
-def search(board, color):
+def search_steps(board, color):
     grid = [row[:] for row in board.grid]  # 원본 판은 건드리지 않는다
     opp = other(color)
+    counter = [0]
     best, move, alpha = -WIN * 10, None, -WIN * 10
     for r, c in ranked(grid, color)[:K]:
         grid[r][c] = color
-        value = -negamax(grid, opp, DEPTH - 1, -WIN * 10, -alpha)
+        value = -(yield from negamax_steps(grid, opp, DEPTH - 1, -WIN * 10, -alpha, counter))
         grid[r][c] = EMPTY
         if value > best:
             best, move = value, (r, c)
@@ -120,7 +125,8 @@ def search(board, color):
     return move
 
 
-def choose_move(board, color, level="normal", rand=None):
+def move_steps(board, color, level="normal", rand=None):
+    """둘 수를 계산하는 제너레이터. Hard만 중간중간 yield하고, 끝나면 (r, c)를 return."""
     if not board.history:
         return SIZE // 2, SIZE // 2
     forced = forced_move(board.grid, color)
@@ -129,5 +135,14 @@ def choose_move(board, color, level="normal", rand=None):
     if level == "easy":
         return (rand or random).choice(ranked(board.grid, color)[:3])
     if level == "hard":
-        return search(board, color)
+        return (yield from search_steps(board, color))
     return ranked(board.grid, color)[0]
+
+
+def choose_move(board, color, level="normal", rand=None):
+    steps = move_steps(board, color, level, rand)
+    while True:
+        try:
+            next(steps)
+        except StopIteration as done:
+            return done.value

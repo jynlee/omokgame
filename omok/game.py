@@ -1,15 +1,17 @@
+import asyncio
 import random
+import time
 
 import pygame
 
 from omok.board import Board, SIZE, EMPTY, BLACK, WHITE
-from omok.ai import choose_move
+from omok.ai import move_steps
 from omok.layout import CELL, MARGIN, TOP, WIDTH, HEIGHT, cell_center
 from omok.themes import THEMES
 
-HELP = "U 무르기 | R 다시 | ESC 메뉴"
 LEVEL_LABELS = {"Easy": "easy", "Normal": "normal", "Hard": "hard"}
 AI_DELAY_MS = (600, 1200)  # AI가 고민하는 듯 보이는 최소 시간 (긴장감용)
+AI_BUDGET_MS = 12  # 프레임마다 AI 계산에 쓰는 시간. 나머지는 화면 그리기
 
 
 def pixel_to_cell(x, y):
@@ -44,6 +46,30 @@ def effect_time(now, won_at):
     return 0 if won_at is None else now - won_at
 
 
+def advance(steps, budget_ms):
+    """제너레이터를 budget_ms 동안 진행(최소 1번). 끝나면 (True, 결과), 아니면 (False, None)."""
+    end = time.perf_counter() + budget_ms / 1000
+    while True:
+        try:
+            next(steps)
+        except StopIteration as done:
+            return True, done.value
+        if time.perf_counter() >= end:
+            return False, None
+
+
+def bar_buttons():
+    """상단 바 오른쪽의 무르기, 다시, 메뉴 버튼 (휴대폰에서도 쓰도록)."""
+    labels = ["무르기", "다시", "메뉴"]
+    w, h, gap = 64, 30, 8
+    left = WIDTH - 16 - len(labels) * w - (len(labels) - 1) * gap
+    buttons = {}
+    for i, label in enumerate(labels):
+        buttons[label] = pygame.Rect(left + i * (w + gap), 0, w, h)
+        buttons[label].centery = TOP // 2 - 4
+    return buttons
+
+
 def draw_game(screen, theme, board, status, t):
     screen.blit(theme.background(), (0, 0))
     for r in range(SIZE):
@@ -56,7 +82,9 @@ def draw_game(screen, theme, board, status, t):
     if line:
         theme.win_effect(screen, [cell_center(*p) for p in line], t)
     theme.text(screen, status, 32, (20, TOP // 2 - 4))
-    theme.text(screen, HELP, 20, (WIDTH - 20, TOP // 2 - 4), "right", rough=.3)
+    for label, rect in bar_buttons().items():
+        pygame.draw.rect(screen, theme.text_color, rect, 2, border_radius=8)
+        theme.text(screen, label, 18, rect.center, "center", rough=.3)
 
 
 def menu_buttons():
@@ -91,31 +119,48 @@ def draw_menu(screen, theme, buttons, title_y=HEIGHT // 4):
         theme.text(screen, theme.title, 30, (WIDTH // 2, buttons["◀"].centery), "center", rough=.3, color=theme.ink)
 
 
-def run():
+async def main():
     # 소리를 쓰지 않으므로 화면과 폰트만 초기화 (WSL 등에서 오디오 경고 방지)
     pygame.display.init()
     pygame.font.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Omok")
     clock = pygame.time.Clock()
-    buttons = menu_buttons()
+    buttons = {**menu_buttons(), "bar": bar_buttons()}
+    # 웹(pygbag)의 pygame은 키 상수를 초기화 뒤에야 제공하므로 여기서 만든다
+    bar_keys = {pygame.K_u: "무르기", pygame.K_r: "다시", pygame.K_ESCAPE: "메뉴"}
 
     state, mode, level, theme_idx = "menu", "pvp", "normal", 0
-    board, ai_pending, ai_move, ai_due, won_at = Board(), False, None, 0, None
+    board, won_at = Board(), None
+    ai_pending, ai_steps, ai_move, ai_due = False, None, None, 0
 
     def finished():
         return board.winner() != EMPTY or board.is_full()
 
+    def act(name):
+        """무르기, 다시, 메뉴. 키와 화면 버튼이 함께 쓴다."""
+        nonlocal state, board, ai_pending, ai_steps
+        ai_pending, ai_steps = False, None  # 고민 중에 판을 바꾸면 계산 중인 AI 수는 버린다
+        if name == "무르기":
+            undo_turn(board, mode)
+            state = "playing"
+        elif name == "다시":
+            board, state = Board(), "playing"
+        else:
+            state = "menu"
+
     running = True
     while running:
-        theme = THEMES[theme_idx]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                hit = next((label for label, rect in buttons.get(state, {}).items()
+                group = "bar" if state in ("playing", "over") else state
+                hit = next((label for label, rect in buttons.get(group, {}).items()
                             if rect.collidepoint(event.pos)), None)
-                if state == "menu" and hit:
+                if group == "bar" and hit:
+                    act(hit)  # 버튼을 누른 클릭은 돌 놓기로 이어지지 않는다
+                elif state == "menu" and hit:
                     if hit in ("◀", "▶"):
                         theme_idx = (theme_idx + (1 if hit == "▶" else -1)) % len(THEMES)
                     elif hit == "2인 대전":
@@ -133,22 +178,15 @@ def run():
                         if finished():
                             state = "over"
                         elif mode == "ai":
-                            ai_pending, ai_move = True, None
+                            ai_pending, ai_steps, ai_move = True, move_steps(board, WHITE, level), None
                             ai_due = pygame.time.get_ticks() + random.randint(*AI_DELAY_MS)
             elif event.type == pygame.KEYDOWN:
                 if state == "menu" and event.key in (pygame.K_LEFT, pygame.K_RIGHT):
                     theme_idx = (theme_idx + (1 if event.key == pygame.K_RIGHT else -1)) % len(THEMES)
                 elif state == "difficulty" and event.key == pygame.K_ESCAPE:
                     state = "menu"
-                elif state in ("playing", "over") and event.key in (pygame.K_u, pygame.K_r, pygame.K_ESCAPE):
-                    ai_pending = False  # 고민 중에 판을 바꾸면 준비해 둔 AI 수는 버린다
-                    if event.key == pygame.K_u:
-                        undo_turn(board, mode)
-                        state = "playing"
-                    elif event.key == pygame.K_r:
-                        board, state = Board(), "playing"
-                    elif event.key == pygame.K_ESCAPE:
-                        state = "menu"
+                elif state in ("playing", "over") and event.key in bar_keys:
+                    act(bar_keys[event.key])
 
         theme = THEMES[theme_idx]
         if state in ("menu", "difficulty"):
@@ -164,16 +202,18 @@ def run():
             draw_game(screen, theme, board, status, effect_time(now, won_at))
         pygame.display.flip()
 
-        # "생각 중"을 먼저 화면에 보여준 다음 계산하고, 최소 고민 시간이 지나면 둔다
+        # AI 계산은 프레임마다 조금씩 진행해 화면이 멈추지 않게 하고, 최소 고민 시간이 지나면 둔다
         if ai_pending:
             if ai_move is None:
-                ai_move = choose_move(board, WHITE, level)
-                pygame.event.clear(pygame.MOUSEBUTTONDOWN)  # 계산 중 눌린 클릭은 버린다
-            if pygame.time.get_ticks() >= ai_due:
+                done, value = advance(ai_steps, AI_BUDGET_MS)
+                if done:
+                    ai_move = value
+            if ai_move is not None and pygame.time.get_ticks() >= ai_due:
                 board.place(*ai_move)
-                ai_pending = False
+                ai_pending, ai_steps = False, None
                 if finished():
                     state = "over"
         clock.tick(60)
+        await asyncio.sleep(0)  # 브라우저(pygbag)에 차례를 넘긴다
 
     pygame.quit()

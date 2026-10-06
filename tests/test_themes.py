@@ -55,3 +55,10 @@ def test_chalk_text_cached():
 
 def test_two_themes_with_distinct_titles():
     assert [t.title for t in THEMES] == ["모래사장", "칠판"]
+
+
+def test_game_code_avoids_modules_missing_on_web():
+    # 웹(pygbag)의 pygame에는 gfxdraw가 없어 import 하는 순간 게임이 멈춘다
+    from pathlib import Path
+    sources = Path(__file__).resolve().parents[1].joinpath("omok").rglob("*.py")
+    assert [p.name for p in sources if "gfxdraw" in p.read_text(encoding="utf-8")] == []
