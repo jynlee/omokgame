@@ -1,0 +1,40 @@
+from omok.board import Board, BLACK, WHITE
+from omok.game import pixel_to_cell, undo_turn, CELL, MARGIN, TOP
+
+
+def test_pixel_to_cell_exact_and_near():
+    assert pixel_to_cell(MARGIN, TOP + MARGIN) == (0, 0)
+    assert pixel_to_cell(MARGIN + 7 * CELL + 15, TOP + MARGIN + 7 * CELL - 15) == (7, 7)
+
+
+def test_pixel_to_cell_outside():
+    assert pixel_to_cell(0, 0) is None
+    assert pixel_to_cell(MARGIN + 15 * CELL, TOP + MARGIN) is None
+    assert pixel_to_cell(MARGIN, 10) is None
+
+
+def test_undo_pvp_one_move():
+    b = Board(); b.place(7, 7); b.place(7, 8)
+    undo_turn(b, "pvp")
+    assert len(b.history) == 1 and b.turn == WHITE
+
+
+def test_undo_ai_two_moves():
+    b = Board(); b.place(7, 7); b.place(7, 8)
+    undo_turn(b, "ai")
+    assert b.history == [] and b.turn == BLACK
+
+
+def test_undo_ai_after_human_win_returns_to_black():
+    b = Board()
+    for c in range(4):
+        b.place(7, c); b.place(0, c * 2)
+    b.place(7, 4)  # 흑 승리, history 홀수
+    undo_turn(b, "ai")
+    assert b.turn == BLACK and len(b.history) == 8
+
+
+def test_undo_empty_board_noop():
+    b = Board()
+    undo_turn(b, "ai")
+    assert b.history == []
