@@ -1,5 +1,7 @@
 # Omok (오목)
 
+[![Test, build and deploy](https://github.com/jynlee/omokgame/actions/workflows/pages.yml/badge.svg)](https://github.com/jynlee/omokgame/actions/workflows/pages.yml)
+
 Python과 pygame으로 만든 15×15 오목 게임입니다. 2인 대전과 난이도 3단계 AI 대전을 지원하고, 모래사장과 칠판 테마를 고를 수 있습니다.
 
 > 🎮 **브라우저에서 플레이**: 준비 중 (웹 빌드 작업 예정)
@@ -83,10 +85,11 @@ Python과 pygame으로 만든 15×15 오목 게임입니다. 2인 대전과 난�
 | U | 무르기 |
 | R | 다시 시작 |
 | ESC | 메뉴로 |
+| 상단 [무르기] [다시] [메뉴] 버튼 | U / R / ESC와 같음 (휴대폰에서도 사용) |
 
 ### 2. 테스트 실행
 
-규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 pytest 테스트 45개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
+규칙, AI, 테마 그리기, 화면 좌표 변환을 검증하는 pytest 테스트 50개가 있습니다. 그중 하나는 Hard AI와 Normal AI를 실제로 끝까지 대국시켜, Hard가 흑과 백 모두에서 이기는지 확인합니다.
 
 #### 사전 준비
 
@@ -124,6 +127,36 @@ Python과 pygame으로 만든 15×15 오목 게임입니다. 2인 대전과 난�
     python -m pytest --durations=5
     ```
 
+### 3. 웹 빌드
+
+pygbag으로 게임을 웹(WebAssembly)으로 변환합니다. `main` 브랜치에 머지하면 GitHub Actions가 테스트, 빌드, GitHub Pages 배포를 자동으로 진행하고, 테스트가 실패하면 배포하지 않습니다. 아래는 내 PC에서 웹 버전을 미리 확인하는 방법입니다.
+
+#### 사전 준비
+
+- 위 **게임 실행**의 1~3단계(저장소 받기, 가상환경 만들고 켜기)를 마친 상태여야 합니다.
+- 브라우저용 Python 실행 환경을 처음 한 번 내려받으므로 인터넷 연결이 필요합니다.
+
+#### 빌드 단계
+
+1.  **개발용 의존성 설치:**
+    게임 의존성에 더해 웹 빌드 도구 pygbag을 설치합니다.
+
+    ```sh
+    pip install -r requirements-dev.txt
+    ```
+
+2.  **빌드 후 미리보기 서버 실행:**
+    게임 파일(`main.py`, `omok/`, `assets/`)만 `dist/omokgame/`에 모아 빌드하고 서버를 켭니다.
+
+    ```sh
+    python tools/build_web.py --serve
+    ```
+
+3.  **브라우저에서 열기:**
+    http://localhost:8000 을 엽니다. 처음 로딩은 몇 초 걸립니다. 서버는 `Ctrl+C`로 끕니다.
+
+빌드 파일만 만들려면 `--serve` 없이 `python tools/build_web.py`를 실행합니다. 결과는 `dist/omokgame/build/web/`에 생깁니다.
+
 ## 구조
 
 ```
@@ -138,10 +171,12 @@ omok/
     └── chalk.py    칠판 테마
 assets/fonts/       Jua, Nanum Pen Script (SIL OFL 1.1)
 tests/              pytest 테스트
+tools/build_web.py  웹 빌드 스크립트 (pygbag)
+.github/workflows/  테스트, 웹 빌드, GitHub Pages 배포
 docs/               설계 문서와 구현 계획
 ```
 
-게임 규칙과 AI는 화면 코드와 분리되어 있어, 화면 없이 테스트할 수 있고 다른 인터페이스(웹 API 등)에서도 그대로 쓸 수 있습니다. 모든 테마는 같은 메서드(`background`, `stone`, `last_mark`, `win_effect`, `text`)를 가지므로 `game.py`는 어떤 테마인지 모른 채 그립니다. 그림은 이미지 파일 없이 코드로 그립니다.
+게임 규칙과 AI는 화면 코드와 분리되어 있어, 화면 없이 테스트할 수 있고 다른 인터페이스(웹 API 등)에서도 그대로 쓸 수 있습니다. 모든 테마는 같은 메서드(`background`, `stone`, `last_mark`, `win_effect`, `text`)를 가지므로 `game.py`는 어떤 테마인지 모른 채 그립니다. 그림은 이미지 파일 없이 코드로 그립니다. 게임 루프는 비동기(`asyncio`)라 같은 코드가 PC와 브라우저에서 모두 동작합니다.
 
 ## AI는 어떻게 두나요
 
@@ -164,7 +199,7 @@ docs/               설계 문서와 구현 계획
 - 모든 난이도는 먼저 **필수 수**를 확인합니다. 바로 5목을 만들 수 있으면 완성하고, 상대가 5목을 만들 수 있으면 막습니다.
 - **Easy**: 점수 상위 3개 후보 중 하나를 무작위로 고릅니다.
 - **Normal**: 점수가 가장 높은 칸에 둡니다.
-- **Hard**: 알파베타 가지치기를 쓴 negamax로 5수 앞까지 읽습니다. 각 단계에서 점수 상위 10개 후보만 살펴보고, 마지막에는 판 위의 연속 패턴 점수로 형세를 평가합니다. 한 수 계산은 보통 1초 이내이고, 복잡한 국면에서는 2~3초까지 걸립니다.
+- **Hard**: 알파베타 가지치기를 쓴 negamax로 5수 앞까지 읽습니다. 각 단계에서 점수 상위 10개 후보만 살펴보고, 마지막에는 판 위의 연속 패턴 점수로 형세를 평가합니다. 한 수 계산은 PC에서 보통 1초 이내(복잡한 국면은 2~3초), 브라우저에서는 2~3초입니다. 탐색은 수 20개를 읽을 때마다 화면에 차례를 넘기는 제너레이터로 나뉘어 있어, 계산하는 동안에도 화면이 멈추지 않습니다.
 
 처음에는 Hard를 3수 앞까지 읽게 설계했지만, 실제로 대국시켜 보니 Normal에게 졌습니다. 평가 방식을 바꾸고 5수 앞까지 읽게 해서 흑과 백 모두에서 이기도록 고쳤습니다. 과정은 `docs/design/`에 정리해 두었습니다.
 
