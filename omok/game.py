@@ -39,6 +39,11 @@ def status_text(board, names, thinking=False, t=None):
     return f"{names[board.turn]} 차례"
 
 
+def effect_time(now, won_at):
+    """승리 효과용 시간: 이긴 순간부터 잰다 (애니메이션이 처음부터 재생되도록)."""
+    return 0 if won_at is None else now - won_at
+
+
 def draw_game(screen, theme, board, status, t):
     screen.blit(theme.background(), (0, 0))
     for r in range(SIZE):
@@ -96,7 +101,7 @@ def run():
     buttons = menu_buttons()
 
     state, mode, level, theme_idx = "menu", "pvp", "normal", 0
-    board, ai_pending, ai_move, ai_due = Board(), False, None, 0
+    board, ai_pending, ai_move, ai_due, won_at = Board(), False, None, 0, None
 
     def finished():
         return board.winner() != EMPTY or board.is_full()
@@ -150,8 +155,13 @@ def run():
             draw_menu(screen, theme, buttons[state])
         else:
             now = pygame.time.get_ticks()
+            # 승리, 무르기, 다시 시작 어느 경로든 승패 상태를 보고 승리 시각을 맞춘다
+            if board.winner() == EMPTY:
+                won_at = None
+            elif won_at is None:
+                won_at = now
             status = status_text(board, theme.names, thinking=ai_pending, t=now)
-            draw_game(screen, theme, board, status, now)
+            draw_game(screen, theme, board, status, effect_time(now, won_at))
         pygame.display.flip()
 
         # "생각 중"을 먼저 화면에 보여준 다음 계산하고, 최소 고민 시간이 지나면 둔다

@@ -59,3 +59,9 @@ def test_thinking_dots_cycle():
     names = {BLACK: "흑", WHITE: "백"}
     assert [status_text(Board(), names, thinking=True, t=t) for t in (0, 300, 600, 900)] == \
         ["생각 중.", "생각 중..", "생각 중...", "생각 중."]
+
+
+def test_effect_time_counts_from_win():
+    from omok.game import effect_time
+    assert effect_time(now=50_000, won_at=49_000) == 1000
+    assert effect_time(now=50_000, won_at=None) == 0
