@@ -141,6 +141,7 @@ class Chalk:
 
     def text(self, surf, s, size, pos, align="left", rough=1.0, color=None):
         color = color or self.text_color
+        size = round(size * 1.3)  # 손글씨 글꼴은 같은 크기에서 글자가 작게 나와 키운다
         key = (s, size, rough, color)
         if key not in self._text_cache:
             self._text_cache[key] = self._chalk_text(s, size, rough, color)

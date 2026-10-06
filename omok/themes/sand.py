@@ -31,7 +31,7 @@ def shadow(surf, c):
 
 
 def conch_sprite():
-    """흑: 소라껍질. 왼쪽 나선 원 + 오른쪽 뾰족한 끝을 -0.55rad 회전."""
+    """흑: 하늘색 소라껍질. 왼쪽 나선 원 + 오른쪽 뾰족한 끝을 -0.55rad 회전."""
     size = int(R * 2.8)
     c = size / 2
     surf = pygame.Surface((size, size), pygame.SRCALPHA)
@@ -41,15 +41,15 @@ def conch_sprite():
                               for a in (-1.25 - i * (2 * math.pi - 2.5) / 24 for i in range(25))]
     body = rotate(body, angle, c, c)
     hl = rotate([(cx - R * .25, -R * .35)], angle, c, c)[0]
-    fill = radial((size, size), hl, int(R * 1.4), [(0, (184, 120, 74, 255)), (1, (69, 34, 15, 255))])
+    fill = radial((size, size), hl, int(R * 1.4), [(0, (190, 232, 250, 255)), (1, (52, 128, 178, 255))])
     surf.blit(masked(fill, body), (0, 0))
-    gfxdraw.aapolygon(surf, [(round(x), round(y)) for x, y in body], (47, 22, 8))
+    gfxdraw.aapolygon(surf, [(round(x), round(y)) for x, y in body], (30, 88, 130))
     spiral = [(cx + math.cos(t) * rad * .82 * (1 - t / (math.pi * 3.6)),
                math.sin(t) * rad * .82 * (1 - t / (math.pi * 3.6)))
               for t in (i * .15 for i in range(int(math.pi * 3.2 / .15) + 1))]
-    pygame.draw.aalines(surf, (245, 222, 180), False, rotate(spiral, angle, c, c))
+    pygame.draw.aalines(surf, (255, 255, 255), False, rotate(spiral, angle, c, c))
     for k in (-.35, 0, .35):
-        pygame.draw.aaline(surf, (215, 185, 145), *rotate([(cx + rad * .75, k * rad), (R * 1.1, k * R * .08)], angle, c, c))
+        pygame.draw.aaline(surf, (225, 242, 252), *rotate([(cx + rad * .75, k * rad), (R * 1.1, k * R * .08)], angle, c, c))
     return surf
 
 
@@ -158,18 +158,18 @@ class Sand:
 
     def win_effect(self, surf, points, t):
         glows = self._sprite("glow", glow_sprites)
-        level = .35 + .45 * (.5 + .5 * math.sin(t / 320))
+        level = .2 + .25 * (.5 + .5 * math.sin(t / 450))  # 은은하게 숨 쉬듯
         glow = glows[round(level * (len(glows) - 1))]
         for x, y in points:
             surf.blit(glow, glow.get_rect(center=(x, y)), special_flags=pygame.BLEND_RGB_ADD)
         (x0, y0), (x1, y1) = points[0], points[-1]
         rnd = rng(42)
-        for _ in range(30):
+        for _ in range(14):
             k = rnd.random() * 1.2 - .1
             sx = x0 + (x1 - x0) * k + (rnd.random() - .5) * 34
             sy = y0 + (y1 - y0) * k + (rnd.random() - .5) * 34
-            size, phase, gold = 3 + rnd.random() * 5, rnd.random() * 6.28, rnd.random() < .5
-            a = max(0.0, math.sin(t / 260 + phase))
+            size, phase, gold = 2 + rnd.random() * 3, rnd.random() * 6.28, rnd.random() < .5
+            a = max(0.0, math.sin(t / 420 + phase))
             if a > .05:
                 pts = [(round(px), round(py)) for px, py in star(sx, sy, size * a, size * a * .25, 4)]
                 color = (255, 226, 120) if gold else (255, 255, 255)

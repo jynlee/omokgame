@@ -38,3 +38,24 @@ def test_undo_empty_board_noop():
     b = Board()
     undo_turn(b, "ai")
     assert b.history == []
+
+
+def test_status_text():
+    from omok.game import status_text
+    names = {BLACK: "소라(흑)", WHITE: "조개(백)"}
+    b = Board()
+    assert status_text(b, names) == "소라(흑) 차례"
+    assert status_text(b, names, thinking=True) == "생각 중..."
+    for c in range(4):
+        b.place(7, c); b.place(0, c * 2)
+    b.place(7, 4)
+    assert status_text(b, names) == "소라(흑) 승리!"
+    full = Board(); full.history = [(0, 0)] * 225
+    assert status_text(full, names) == "무승부"
+
+
+def test_thinking_dots_cycle():
+    from omok.game import status_text
+    names = {BLACK: "흑", WHITE: "백"}
+    assert [status_text(Board(), names, thinking=True, t=t) for t in (0, 300, 600, 900)] == \
+        ["생각 중.", "생각 중..", "생각 중...", "생각 중."]
