@@ -87,3 +87,23 @@ def test_is_full():
     assert not b.is_full()
     b.history = [(0, 0)] * (SIZE * SIZE)
     assert b.is_full()
+
+
+def test_winning_line_horizontal():
+    b = play(black_line([(7, c) for c in range(3, 8)]))
+    assert b.winning_line() == [(7, c) for c in range(3, 8)]
+
+
+def test_winning_line_diagonal_in_order():
+    b = play(black_line([(4 - i, 4 - i) for i in range(5)]))  # 역순으로 둬도
+    assert b.winning_line() == [(i, i) for i in range(5)]
+
+
+def test_winning_line_six_cells():
+    cells = [(7, 0), (7, 1), (7, 2), (7, 4), (7, 5), (7, 3)]
+    assert play(black_line(cells)).winning_line() == [(7, c) for c in range(6)]
+
+
+def test_winning_line_empty_without_winner():
+    assert play(black_line([(7, c) for c in range(4)])).winning_line() == []
+    assert Board().winning_line() == []

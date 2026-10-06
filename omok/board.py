@@ -27,23 +27,33 @@ class Board:
         self.grid[r][c] = EMPTY
         return True
 
-    def winner(self):
-        """마지막 수 기준으로 4방향을 세어 5개 이상이면 그 색을 반환."""
-        if not self.history:
-            return EMPTY
-        r, c = self.history[-1]
+    def _run(self, r, c, dr, dc):
+        """(r, c)를 지나는 같은 색 연속 칸을 음의 방향 끝부터 순서대로."""
         color = self.grid[r][c]
+        while 0 <= r - dr < SIZE and 0 <= c - dc < SIZE and self.grid[r - dr][c - dc] == color:
+            r, c = r - dr, c - dc
+        cells = []
+        while 0 <= r < SIZE and 0 <= c < SIZE and self.grid[r][c] == color:
+            cells.append((r, c))
+            r, c = r + dr, c + dc
+        return cells
+
+    def winning_line(self):
+        """마지막 수를 지나는 5개 이상 연속 칸. 승부 전이면 []."""
+        if not self.history:
+            return []
+        r, c = self.history[-1]
+        if self.grid[r][c] == EMPTY:
+            return []
         for dr, dc in DIRECTIONS:
-            count = 1
-            for sign in (1, -1):
-                rr, cc = r + dr * sign, c + dc * sign
-                while 0 <= rr < SIZE and 0 <= cc < SIZE and self.grid[rr][cc] == color:
-                    count += 1
-                    rr += dr * sign
-                    cc += dc * sign
-            if count >= 5:
-                return color
-        return EMPTY
+            cells = self._run(r, c, dr, dc)
+            if len(cells) >= 5:
+                return cells
+        return []
+
+    def winner(self):
+        line = self.winning_line()
+        return self.grid[line[0][0]][line[0][1]] if line else EMPTY
 
     def is_full(self):
         return len(self.history) == SIZE * SIZE
