@@ -40,7 +40,7 @@ LEVELS = ("easy", "normal", "hard")
 
 # Hard 탐색: 단계별 후보 수, 읽는 수, 승리 값, 차례인 쪽 주도권 가중치
 K, DEPTH, WIN, INITIATIVE = 10, 5, 10**9, 1.5
-YIELD_EVERY = 200  # 탐색 노드 이만큼마다 화면에 차례를 넘긴다
+YIELD_EVERY = 50  # 탐색 노드 이만큼마다 화면에 차례를 넘긴다 (한 번에 약 30ms, 웹은 2~3배)
 
 
 def other(color):

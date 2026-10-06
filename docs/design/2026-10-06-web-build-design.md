@@ -45,7 +45,7 @@ asyncio.run(main())
 
 | 이름 | 설명 |
 |---|---|
-| `YIELD_EVERY = 200` | 탐색 노드(negamax 호출) 200개마다 한 번 멈춘다 |
+| `YIELD_EVERY = 50` | 탐색 노드(negamax 호출) 50개마다 한 번 멈춘다 (한 번 계산 약 30ms) |
 | `move_steps(board, color, level="normal", rand=None)` | 제너레이터. 계산 중간중간 `yield`(값 없음)하고, 끝나면 `return (r, c)` |
 | `choose_move(board, color, level="normal", rand=None)` | 기존과 같은 시그니처와 결과. 내부에서 `move_steps`를 끝까지 돌려 값을 반환 |
 

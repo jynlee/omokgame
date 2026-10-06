@@ -1,4 +1,5 @@
-from omok.game import run
+import asyncio
 
-if __name__ == "__main__":
-    run()
+from omok.game import main
+
+asyncio.run(main())
